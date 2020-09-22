@@ -1,4 +1,5 @@
-﻿using NerdStore.Core.DomainObjects;
+﻿using System.Collections.Generic;
+using NerdStore.Core.DomainObjects;
 
 namespace NerdStore.Catalogo.Domain
 {
@@ -7,6 +8,11 @@ namespace NerdStore.Catalogo.Domain
         public string Nome { get; }
         public int Codigo { get; }
 
+        // EF Relation
+        public ICollection<Produto> Produtos { get; set; }
+
+        //EF
+        protected Categoria() { }
         public Categoria(string nome, int codigo)
         {
             Nome = nome;
