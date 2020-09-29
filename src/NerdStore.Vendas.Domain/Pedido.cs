@@ -9,8 +9,8 @@ namespace NerdStore.Vendas.Domain
     {
         public int Codigo { get; private set; }
         public Guid ClienteId { get; private set; }
-        public Guid? VoucherId { get; set; }
-        public bool VoucherUtilizado { get; set; }
+        public Guid? VoucherId { get; private set; }
+        public bool VoucherUtilizado { get; private set; }
         public decimal Desconto { get; private set; }
         public decimal ValorTotal { get; private set; }
         public DateTime DataCadastro { get; private set; }
@@ -47,7 +47,7 @@ namespace NerdStore.Vendas.Domain
 
         public void CalcularValorTotalDesconto()
         {
-            if(!VoucherUtilizado) return;
+            if (!VoucherUtilizado) return;
 
             decimal desconto = 0;
             var valor = ValorTotal;
@@ -95,13 +95,51 @@ namespace NerdStore.Vendas.Domain
 
         public void RemoverItem(PedidoItem item)
         {
-            if(!item.EhValido()) return;
+            if (!item.EhValido()) return;
 
             var itemExistente = PedidoItems.FirstOrDefault(p => p.ProdutoId == item.ProdutoId);
-            if(itemExistente == null) throw new DomainException("O item não pertence ao pedido");
+            if (itemExistente == null) throw new DomainException("O item não pertence ao pedido");
             _peditoItems.Remove(itemExistente);
 
             CalularValorPedido();
+        }
+
+        public void AtualizarItem(PedidoItem item)
+        {
+            if (!item.EhValido()) return;
+            item.AssociarPedido(Id);
+
+            var itemExistente = PedidoItems.FirstOrDefault(p => p.ProdutoId == item.ProdutoId);
+            if (itemExistente == null) throw new DomainException("O item não pertence ao pedido");
+
+            _peditoItems.Remove(itemExistente);
+            _peditoItems.Add(item);
+
+            CalularValorPedido();
+        }
+
+        public void AtualizarUnidades(PedidoItem item, int unidades)
+        {
+            item.AtualizarUnidades(unidades);
+            AtualizarItem(item);
+        }
+
+        public void TornarRascunho() => PedidoStatus = PedidoStatus.Rascunho;
+
+        public void IniciarPedido() => PedidoStatus = PedidoStatus.Iniciado;
+
+        public void FinalizarPedido() => PedidoStatus = PedidoStatus.Pago;
+
+        public void CancelarPedido() => PedidoStatus = PedidoStatus.Cancelado;
+
+        public static class PedidoFactory
+        {
+            public static Pedido NovoPedidoRascunho(Guid clienteId)
+            {
+                var pedido = new Pedido {ClienteId = clienteId};
+                pedido.TornarRascunho();
+                return pedido;
+            }
         }
     }
 }
