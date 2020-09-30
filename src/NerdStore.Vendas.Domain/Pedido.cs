@@ -17,7 +17,7 @@ namespace NerdStore.Vendas.Domain
         public PedidoStatus PedidoStatus { get; private set; }
 
         private readonly List<PedidoItem> _peditoItems;
-        public IReadOnlyCollection<PedidoItem> PedidoItems { get; set; }
+        public IReadOnlyCollection<PedidoItem> PedidoItems => _peditoItems;
 
         //EF Rel.
         public Voucher Voucher { get; private set; }
