@@ -1,9 +1,10 @@
 ﻿using System.Linq;
-using System.Runtime.Serialization.Formatters;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using NerdStore.Core.Communication.Mediator;
 using NerdStore.Core.Messages;
+using NerdStore.Core.Messages.CommonMessages.Notifications;
 using NerdStore.Vendas.Domain;
 
 namespace NerdStore.Vendas.Application.Commands
@@ -11,10 +12,12 @@ namespace NerdStore.Vendas.Application.Commands
     public class PedidoCommandHandler : IRequestHandler<AdicionarItemPedidoCommand, bool>
     {
         private readonly IPedidoRepository _pedidoRepository;
+        private readonly IMediatorHandler _mediatorHandler;
 
-        public PedidoCommandHandler(IPedidoRepository pedidoRepository)
+        public PedidoCommandHandler(IPedidoRepository pedidoRepository, IMediatorHandler mediatorHandler)
         {
             _pedidoRepository = pedidoRepository;
+            _mediatorHandler = mediatorHandler;
         }
 
         public async Task<bool> Handle(AdicionarItemPedidoCommand message, CancellationToken cancellationToken)
@@ -34,8 +37,8 @@ namespace NerdStore.Vendas.Application.Commands
             {
                 var pedidoItemExistente = pedido.PedidoItemExistente(pedidoItem);
                 pedido.AdicionarItem(pedidoItem);
-                
-                if(pedidoItemExistente)
+
+                if (pedidoItemExistente)
                     _pedidoRepository.AtualizarItem(pedido.PedidoItems.FirstOrDefault(p => p.ProdutoId == pedidoItem.ProdutoId));
                 else _pedidoRepository.AdicionarItem(pedidoItem);
             }
@@ -49,7 +52,7 @@ namespace NerdStore.Vendas.Application.Commands
 
             foreach (var error in message.ValidationResult.Errors)
             {
-                // TODO: Lançar um evento erro
+                _mediatorHandler.PublicarNotificacao(new DomainNotification(message.MessageType, error.ErrorMessage));
             }
 
             return false;
