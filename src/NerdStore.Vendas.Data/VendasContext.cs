@@ -5,16 +5,18 @@ using NerdStore.Vendas.Domain;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using NerdStore.Core.Communication.Mediator;
 
 namespace NerdStore.Vendas.Data
 {
     public class VendasContext : DbContext, IUnitOfWork
     {
+        private readonly IMediatorHandler _mediatorHandler;
 
-        public VendasContext(DbContextOptions<VendasContext> options)
+        public VendasContext(DbContextOptions<VendasContext> options, IMediatorHandler mediatorHandler)
             : base(options)
         {
-            
+            _mediatorHandler = mediatorHandler;
         }
 
         public DbSet<Pedido> Pedidos { get; set; }
@@ -36,6 +38,8 @@ namespace NerdStore.Vendas.Data
                     entry.Property("DataCadastro").IsModified = false;
                 }
             }
+
+            await _mediatorHandler.PublicarEventos(this);
             
             return await base.SaveChangesAsync() > 0;
         }
